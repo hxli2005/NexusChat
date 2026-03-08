@@ -1,0 +1,139 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: nexuschat
+      MYSQL_DATABASE: nexuschat
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h127.0.0.1", "-uroot", "-pnexuschat"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://:29092,CONTROLLER://:9093,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+  user:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: user
+    environment:
+      NODE_ID: "2"
+      USER_GRPC_PORT: "50051"
+      MYSQL_DSN: "root:nexuschat@tcp(mysql:3306)/nexuschat?parseTime=true"
+      JWT_SECRET: "your-secret-key"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "50051:50051"
+
+  message:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: message
+    environment:
+      NODE_ID: "3"
+      MESSAGE_GRPC_PORT: "50052"
+      USER_SERVICE_ADDR: "user:50051"
+      MYSQL_DSN: "root:nexuschat@tcp(mysql:3306)/nexuschat?parseTime=true"
+      REDIS_ADDR: "redis:6379"
+      KAFKA_BROKERS: "kafka:29092"
+      AGENT_BOT_USER_ID: "1"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      user:
+        condition: service_started
+    ports:
+      - "50052:50052"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: gateway
+    environment:
+      NODE_ID: "1"
+      GATEWAY_PORT: "8080"
+      USER_SERVICE_ADDR: "user:50051"
+      MESSAGE_SERVICE_ADDR: "message:50052"
+      KAFKA_BROKERS: "kafka:29092"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: "your-secret-key"
+      SELF_ADDR: "gateway:8080"
+    depends_on:
+      kafka:
+        condition: service_started
+      user:
+        condition: service_started
+      message:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  agent:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: agent
+    environment:
+      KAFKA_BROKERS: "kafka:29092"
+      AGENT_BOT_USER_ID: "1"
+    depends_on:
+      kafka:
+        condition: service_started
+
+  web:
+    image: nginx:1.27-alpine
+    volumes:
+      - ../web:/usr/share/nginx/html:ro
+    ports:
+      - "5173:80"
+    depends_on:
+      gateway:
+        condition: service_started
+
+volumes:
+  mysql_data:

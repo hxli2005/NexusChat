@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "github.com/lhx/nexuschat/api/user/v1;userv1";
+
+service UserService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc CheckFriendship(CheckFriendshipRequest) returns (CheckFriendshipResponse);
+  rpc CheckMembership(CheckMembershipRequest) returns (CheckMembershipResponse);
+  rpc GetConversationMembers(GetConversationMembersRequest) returns (GetConversationMembersResponse);
+}
+
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+  string nickname = 3;
+}
+
+message RegisterResponse {
+  int64 user_id = 1;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  int64 user_id = 2;
+}
+
+message CheckFriendshipRequest {
+  int64 user_id_a = 1;
+  int64 user_id_b = 2;
+}
+
+message CheckFriendshipResponse {
+  bool is_friend = 1;
+}
+
+message CheckMembershipRequest {
+  int64 user_id = 1;
+  int64 conversation_id = 2;
+}
+
+message CheckMembershipResponse {
+  bool is_member = 1;
+}
+
+message GetConversationMembersRequest {
+  int64 conversation_id = 1;
+}
+
+message GetConversationMembersResponse {
+  repeated int64 user_ids = 1;
+}

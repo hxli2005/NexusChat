@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexusChat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-glow bg-glow-a"></div>
+    <div class="bg-glow bg-glow-b"></div>
+
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">Distributed Realtime + AI</p>
+        <h1>NexusChat Console</h1>
+        <p class="subtitle">A minimal frontend for your microservice chat stack.</p>
+      </header>
+
+      <section class="layout">
+        <aside class="panel auth-panel">
+          <div class="panel-head">
+            <h2>Access</h2>
+            <span id="authBadge" class="badge muted">Guest</span>
+          </div>
+
+          <label class="field">
+            <span>Gateway Base URL</span>
+            <input id="baseUrlInput" value="http://localhost:8080" />
+          </label>
+
+          <div class="tabs">
+            <button id="registerTab" class="tab active">Register</button>
+            <button id="loginTab" class="tab">Login</button>
+          </div>
+
+          <form id="registerForm" class="form">
+            <label class="field">
+              <span>Username</span>
+              <input id="regUsername" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="regPassword" type="password" required />
+            </label>
+            <label class="field">
+              <span>Nickname</span>
+              <input id="regNickname" />
+            </label>
+            <button class="btn primary" type="submit">Create Account</button>
+          </form>
+
+          <form id="loginForm" class="form hidden">
+            <label class="field">
+              <span>Username</span>
+              <input id="loginUsername" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="loginPassword" type="password" required />
+            </label>
+            <button class="btn primary" type="submit">Sign In</button>
+          </form>
+
+          <div class="token-box">
+            <label class="field">
+              <span>JWT Token</span>
+              <textarea id="tokenInput" rows="4" placeholder="Token appears here after login"></textarea>
+            </label>
+            <button id="applyTokenBtn" class="btn ghost" type="button">Use This Token</button>
+          </div>
+        </aside>
+
+        <section class="panel chat-panel">
+          <div class="panel-head">
+            <h2>Chat</h2>
+            <span id="wsBadge" class="badge muted">Disconnected</span>
+          </div>
+
+          <div class="chat-controls">
+            <label class="field small">
+              <span>Conversation ID</span>
+              <input id="convIdInput" type="number" value="1001" min="1" />
+            </label>
+            <div class="control-row">
+              <button id="connectBtn" class="btn primary" type="button">Connect WS</button>
+              <button id="historyBtn" class="btn ghost" type="button">Load History</button>
+            </div>
+          </div>
+
+          <div id="messages" class="messages" aria-live="polite"></div>
+
+          <form id="sendForm" class="composer">
+            <input id="messageInput" placeholder="Type a message... try @AI summarize this project" />
+            <button id="aiHintBtn" class="btn ghost" type="button">@AI</button>
+            <button class="btn primary" type="submit">Send</button>
+          </form>
+        </section>
+      </section>
+
+      <section class="log-panel panel">
+        <div class="panel-head">
+          <h2>Activity</h2>
+          <button id="clearLogBtn" class="btn ghost" type="button">Clear</button>
+        </div>
+        <pre id="log" class="log"></pre>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
